@@ -1,34 +1,51 @@
 // Configuracion central del frontend: URLs reales de los webhooks de n8n y
 // preferencias del usuario (x-api-key, nombre del analista) persistidas en localStorage.
 //
-// IMPORTANTE: no hay backend propio ni mocks. Todas las URLs de abajo son las URLs de
-// PRODUCCION reales de los workflows de n8n (PBI-01 a PBI-07). Los valores por defecto
-// (fallback) son exactamente esas URLs reales, para que la app funcione aunque no se
-// haya creado un archivo .env local.
+// IMPORTANTE: no hay backend propio ni mocks. Todas las URLs vienen EXCLUSIVAMENTE de
+// variables de entorno VITE_* (ver .env.example). Este archivo NO contiene URLs de
+// produccion "de respaldo": si falta una variable, la app debe mostrar un error de
+// configuracion claro en vez de intentar adivinar o usar un valor oculto.
 
-export const ENV = {
-  PBI01_URL:
-    import.meta.env.VITE_PBI01_URL ||
-    'https://jmejiaromero.app.n8n.cloud/webhook/b1e1e547-11d8-4c78-b3d4-03dd739c101d/pbi/solicitudes',
-  PBI02_URL:
-    import.meta.env.VITE_PBI02_URL ||
-    'https://jmejiaromero.app.n8n.cloud/webhook/0bdaac18-2853-4006-920e-5f1ca4bec455/pbi/solicitudes/consultar',
-  PBI03_URL:
-    import.meta.env.VITE_PBI03_URL ||
-    'https://jmejiaromero.app.n8n.cloud/webhook/d6f72879-d965-4eb8-94d9-9613c41f68c6/pbi/solicitudes/listar',
-  PBI04_URL:
-    import.meta.env.VITE_PBI04_URL ||
-    'https://jmejiaromero.app.n8n.cloud/webhook/b5297d27-cae5-4533-8767-a8cf7288b453/pbi/evaluaciones/guardar',
-  PBI05_URL:
-    import.meta.env.VITE_PBI05_URL ||
-    'https://jmejiaromero.app.n8n.cloud/webhook/80741b76-4e1c-443c-98b0-4eeb81746d88/pbi/autorizacion/enviar',
-  PBI06_URL:
-    import.meta.env.VITE_PBI06_URL ||
-    'https://jmejiaromero.app.n8n.cloud/webhook/9efa9ca9-7d8a-4dbb-925e-1a6e9ed08e98/pbi/aprobacion/consultar',
-  PBI07_URL:
-    import.meta.env.VITE_PBI07_URL ||
-    'https://jmejiaromero.app.n8n.cloud/webhook/1be6f16a-4715-40dd-8103-f53f8b551f16/pbi/aprobacion/decidir',
-  DEFAULT_API_KEY: import.meta.env.VITE_DEFAULT_API_KEY || '',
+interface EnvShape {
+  PBI01_URL: string
+  PBI02_URL: string
+  PBI03_URL: string
+  PBI04_URL: string
+  PBI05_URL: string
+  PBI06_URL: string
+  PBI07_URL: string
+  DEFAULT_API_KEY: string
+}
+
+const REQUIRED_VARS = [
+  'VITE_PBI01_URL',
+  'VITE_PBI02_URL',
+  'VITE_PBI03_URL',
+  'VITE_PBI04_URL',
+  'VITE_PBI05_URL',
+  'VITE_PBI06_URL',
+  'VITE_PBI07_URL',
+] as const
+
+export const ENV: EnvShape = {
+  PBI01_URL: import.meta.env.VITE_PBI01_URL ?? '',
+  PBI02_URL: import.meta.env.VITE_PBI02_URL ?? '',
+  PBI03_URL: import.meta.env.VITE_PBI03_URL ?? '',
+  PBI04_URL: import.meta.env.VITE_PBI04_URL ?? '',
+  PBI05_URL: import.meta.env.VITE_PBI05_URL ?? '',
+  PBI06_URL: import.meta.env.VITE_PBI06_URL ?? '',
+  PBI07_URL: import.meta.env.VITE_PBI07_URL ?? '',
+  DEFAULT_API_KEY: import.meta.env.VITE_DEFAULT_API_KEY ?? '',
+}
+
+/**
+ * Devuelve la lista de variables VITE_* obligatorias que faltan o están vacías.
+ * La app debe llamar esto al iniciar y mostrar una pantalla de error de
+ * configuración (en vez de intentar funcionar con datos incompletos) si el
+ * resultado no está vacío. Ver src/components/ConfigError.tsx.
+ */
+export function getMissingEnvVars(): string[] {
+  return REQUIRED_VARS.filter((key) => !import.meta.env[key])
 }
 
 const LS_API_KEY = 'portal_bi_api_key'

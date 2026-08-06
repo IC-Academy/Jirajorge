@@ -1,5 +1,6 @@
-import { useState } from 'react'
-import { Search, ShieldCheck, Send } from 'lucide-react'
+import { useEffect, useState, useCallback } from 'react'
+import { useSearchParams } from 'react-router-dom'
+import { Search, ShieldCheck, Send, Lock } from 'lucide-react'
 import { Card, CardBody, CardHeader } from '@/components/Card'
 import { Field, inputClass } from '@/components/Field'
 import { Button } from '@/components/Button'
@@ -17,11 +18,15 @@ const DECISIONES: DecisionAprobador[] = [
 const PRIORIDADES = ['', 'Baja', 'Media', 'Alta', 'Crítica']
 
 export function CentroAutorizaciones() {
-  const [token, setToken] = useState('')
+  const [searchParams] = useSearchParams()
+  const tokenFromUrl = searchParams.get('token') ?? ''
+
+  const [token, setToken] = useState(tokenFromUrl)
   const [loadingConsulta, setLoadingConsulta] = useState(false)
   const [consultaError, setConsultaError] = useState<string | null>(null)
   const [networkErr, setNetworkErr] = useState<string | null>(null)
   const [microinforme, setMicroinforme] = useState<ConsultarAprobacionResponse | null>(null)
+  const [autoConsultado, setAutoConsultado] = useState(false)
 
   const [decision, setDecision] = useState<DecisionAprobador | ''>('')
   const [comentarios, setComentarios] = useState('')
@@ -31,30 +36,43 @@ export function CentroAutorizaciones() {
   const [decisionError, setDecisionError] = useState<string | null>(null)
   const [decisionResultado, setDecisionResultado] = useState<RegistrarDecisionResponse | null>(null)
 
-  async function handleConsultar() {
-    if (!token.trim()) {
-      setConsultaError('Ingresa el token de aprobación recibido por correo.')
-      return
-    }
-    setLoadingConsulta(true)
-    setConsultaError(null)
-    setNetworkErr(null)
-    setMicroinforme(null)
-    setDecisionResultado(null)
+  const handleConsultar = useCallback(
+    async (tokenValue: string) => {
+      if (!tokenValue.trim()) {
+        setConsultaError('Ingresa el token de aprobación recibido por correo.')
+        return
+      }
+      setLoadingConsulta(true)
+      setConsultaError(null)
+      setNetworkErr(null)
+      setMicroinforme(null)
+      setDecisionResultado(null)
 
-    const res = await consultarAprobacion({ token: token.trim() })
-    setLoadingConsulta(false)
+      const res = await consultarAprobacion({ token: tokenValue.trim() })
+      setLoadingConsulta(false)
 
-    if (res.networkError) {
-      setNetworkErr(networkErrorMessage('jmejiaromero.app.n8n.cloud'))
-      return
+      if (res.networkError) {
+        setNetworkErr(networkErrorMessage('jmejiaromero.app.n8n.cloud'))
+        return
+      }
+      if (!res.ok || !res.data?.ok) {
+        setConsultaError(res.data?.error || `El servidor respondió con un error (HTTP ${res.status}).`)
+        return
+      }
+      setMicroinforme(res.data)
+    },
+    [],
+  )
+
+  // Si el enlace del correo trae ?token=..., lo consultamos automáticamente al
+  // cargar la pantalla: el aprobador no necesita copiar ni pegar nada.
+  useEffect(() => {
+    if (tokenFromUrl && !autoConsultado) {
+      setAutoConsultado(true)
+      handleConsultar(tokenFromUrl)
     }
-    if (!res.ok || !res.data?.ok) {
-      setConsultaError(res.data?.error || `El servidor respondió con un error (HTTP ${res.status}).`)
-      return
-    }
-    setMicroinforme(res.data)
-  }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [tokenFromUrl, autoConsultado])
 
   async function handleRegistrarDecision() {
     if (!decision) {
@@ -88,6 +106,8 @@ export function CentroAutorizaciones() {
     setDecisionResultado(res.data)
   }
 
+  const yaRespondida = !!microinforme?.decisionPrevia && microinforme.decisionPrevia !== 'Pendiente'
+
   return (
     <div className="mx-auto max-w-3xl">
       <div className="mb-6 flex items-center gap-2">
@@ -100,6 +120,12 @@ export function CentroAutorizaciones() {
         </div>
       </div>
 
+      {tokenFromUrl && loadingConsulta && !microinforme ? (
+        <div className="mb-4 rounded-md border border-blue-200 bg-blue-50 px-4 py-3 text-sm text-blue-800">
+          Detectamos tu token en el enlace del correo. Consultando tu microinforme automáticamente...
+        </div>
+      ) : null}
+
       <Card>
         <CardBody className="flex flex-wrap items-end gap-4">
           <Field label="Token de aprobación" required className="flex-1 min-w-[280px]">
@@ -110,7 +136,7 @@ export function CentroAutorizaciones() {
               placeholder="Pega aquí el token recibido por correo"
             />
           </Field>
-          <Button onClick={handleConsultar} loading={loadingConsulta} icon={<Search className="h-4 w-4" />}>
+          <Button onClick={() => handleConsultar(token)} loading={loadingConsulta} icon={<Search className="h-4 w-4" />}>
             Consultar microinforme
           </Button>
         </CardBody>
@@ -149,14 +175,23 @@ export function CentroAutorizaciones() {
             </CardBody>
           </Card>
 
-          {microinforme.decisionPrevia && microinforme.decisionPrevia !== 'Pendiente' ? (
-            <div className="mt-4 rounded-md border border-indigo-200 bg-indigo-50 px-4 py-3 text-sm text-indigo-800">
-              Ya se registró una decisión previa para este token: <strong>{microinforme.decisionPrevia}</strong>.
-              Puedes registrar una nueva si el token sigue vigente.
-            </div>
-          ) : null}
-
-          {decisionResultado ? (
+          {yaRespondida ? (
+            <Card className="mt-6 border-indigo-200 bg-indigo-50/50">
+              <CardBody className="flex items-start gap-3">
+                <Lock className="mt-0.5 h-5 w-5 text-indigo-700" />
+                <div>
+                  <p className="text-sm font-semibold text-indigo-900">Esta autorización ya fue respondida</p>
+                  <p className="mt-1 text-sm text-indigo-800">
+                    Decisión registrada: <strong>{microinforme.decisionPrevia}</strong>
+                  </p>
+                  <p className="mt-2 text-xs text-indigo-700">
+                    El token de esta autorización ya fue utilizado. Por seguridad (PBI-07), no es posible
+                    registrar una nueva decisión con el mismo token.
+                  </p>
+                </div>
+              </CardBody>
+            </Card>
+          ) : decisionResultado ? (
             <Card className="mt-6 border-emerald-200 bg-emerald-50/50">
               <CardBody>
                 <p className="text-sm font-semibold text-emerald-900">Decisión registrada correctamente</p>

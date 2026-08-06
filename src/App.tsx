@@ -1,5 +1,7 @@
 import { HashRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { Layout } from '@/components/Layout'
+import { ConfigError } from '@/components/ConfigError'
+import { getMissingEnvVars } from '@/lib/config'
 import { BandejaBI } from '@/routes/BandejaBI'
 import { RegistrarSolicitud } from '@/routes/RegistrarSolicitud'
 import { ConsultarSolicitud } from '@/routes/ConsultarSolicitud'
@@ -7,6 +9,11 @@ import { EvaluacionBI } from '@/routes/EvaluacionBI'
 import { CentroAutorizaciones } from '@/routes/CentroAutorizaciones'
 
 export default function App() {
+  const missingEnvVars = getMissingEnvVars()
+  if (missingEnvVars.length > 0) {
+    return <ConfigError missing={missingEnvVars} />
+  }
+
   return (
     <HashRouter>
       <Layout>

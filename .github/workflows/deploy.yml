@@ -1,0 +1,77 @@
+name: Deploy Portal BI a GitHub Pages
+
+# Se ejecuta automaticamente en cada push a main.
+# Tambien puede lanzarse manualmente desde la pestaña Actions (workflow_dispatch).
+on:
+  push:
+    branches: [main]
+  workflow_dispatch: {}
+
+# Permisos minimos necesarios para publicar en GitHub Pages con el flujo nativo
+# (actions/deploy-pages). El repositorio debe tener configurado
+# Settings -> Pages -> Source = "GitHub Actions".
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Evita despliegues concurrentes que puedan pisarse entre si; no cancela un
+# despliegue ya en curso, solo encola el siguiente.
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    name: Instalar y compilar (falla si el build falla)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout del repositorio
+        uses: actions/checkout@v4
+
+      - name: Configurar Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Instalar dependencias
+        run: npm ci
+
+      - name: Compilar (npm run build)
+        # Las URLs de los 7 webhooks de n8n se inyectan como variables de
+        # entorno en tiempo de build (nunca como archivo .env versionado).
+        # Deben configurarse en Settings -> Secrets and variables -> Actions
+        # -> Variables (no son secretas per se: estan protegidas por CORS y
+        # x-api-key del lado de n8n, pero se mantienen fuera del repo para
+        # poder rotarlas sin tocar codigo). VITE_DEFAULT_API_KEY, si se usa,
+        # deberia configurarse como Secret en vez de Variable.
+        # VITE_BASE_PATH ya tiene "/Jirajorge/" como valor por defecto en
+        # vite.config.ts, por lo que no es obligatorio definirlo aqui.
+        env:
+          VITE_PBI01_URL: ${{ vars.VITE_PBI01_URL }}
+          VITE_PBI02_URL: ${{ vars.VITE_PBI02_URL }}
+          VITE_PBI03_URL: ${{ vars.VITE_PBI03_URL }}
+          VITE_PBI04_URL: ${{ vars.VITE_PBI04_URL }}
+          VITE_PBI05_URL: ${{ vars.VITE_PBI05_URL }}
+          VITE_PBI06_URL: ${{ vars.VITE_PBI06_URL }}
+          VITE_PBI07_URL: ${{ vars.VITE_PBI07_URL }}
+          VITE_DEFAULT_API_KEY: ${{ secrets.VITE_DEFAULT_API_KEY }}
+        run: npm run build
+
+      - name: Preparar artefacto de Pages (carpeta dist)
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist
+
+  deploy:
+    name: Publicar en GitHub Pages
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Desplegar a GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

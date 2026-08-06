@@ -2,10 +2,13 @@ import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import path from 'node:path'
 
-// Base path for GitHub Pages project sites (https://<user>.github.io/<repo>/).
-// Set VITE_BASE_PATH="/<repo-name>/" as an env var when building for GitHub Pages.
-// Leave unset (defaults to "/") for local dev, a custom domain, or a user/org page.
-const basePath = process.env.VITE_BASE_PATH || '/'
+// Base path para GitHub Pages (project site del repositorio IC-Academy/Jirajorge,
+// publicado en https://ic-academy.github.io/Jirajorge/). Respeta mayusculas y
+// minusculas exactas: GitHub Pages distingue el nombre de la ruta.
+// Se puede sobreescribir con la variable de entorno VITE_BASE_PATH (por ejemplo
+// VITE_BASE_PATH=/ para servir en la raiz de un dominio propio), pero el valor por
+// defecto ya es el definitivo para este repositorio.
+const basePath = process.env.VITE_BASE_PATH || '/Jirajorge/'
 
 export default defineConfig({
   base: basePath,

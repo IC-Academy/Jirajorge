@@ -8,6 +8,8 @@ import {
   ShieldCheck,
   Settings,
   X,
+  Eye,
+  EyeOff,
 } from 'lucide-react'
 import { getApiKey, setApiKey } from '@/lib/config'
 
@@ -73,6 +75,7 @@ export function Layout({ children }: { children: ReactNode }) {
 function ConfigPanel({ onClose }: { onClose: () => void }) {
   const [value, setValue] = useState(getApiKey())
   const [saved, setSaved] = useState(false)
+  const [showKey, setShowKey] = useState(false)
 
   function handleSave() {
     setApiKey(value)
@@ -92,13 +95,24 @@ function ConfigPanel({ onClose }: { onClose: () => void }) {
         <label className="mb-1.5 block text-sm font-medium text-slate-700">
           API Key (x-api-key)
         </label>
-        <input
-          type="text"
-          value={value}
-          onChange={(e) => setValue(e.target.value)}
-          placeholder="Pega aquí la clave del portal"
-          className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-200"
-        />
+        <div className="relative">
+          <input
+            type={showKey ? 'text' : 'password'}
+            autoComplete="off"
+            value={value}
+            onChange={(e) => setValue(e.target.value)}
+            placeholder="Pega aquí la clave del portal"
+            className="w-full rounded-md border border-slate-300 px-3 py-2 pr-10 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-200"
+          />
+          <button
+            type="button"
+            onClick={() => setShowKey((v) => !v)}
+            className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+            aria-label={showKey ? 'Ocultar clave' : 'Mostrar clave'}
+          >
+            {showKey ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+          </button>
+        </div>
         <p className="mt-2 text-xs text-slate-500">
           Esta clave protege los endpoints internos del portal (Bandeja BI, Evaluación,
           Enviar a autorización). Mientras no esté configurada del lado de n8n, las llamadas
