@@ -1,6 +1,6 @@
 import { useState, type ReactNode } from 'react'
 import { NavLink, useNavigate } from 'react-router-dom'
-import { ClipboardList, FileSearch, Inbox, ClipboardCheck, ShieldCheck, LayoutDashboard, LogIn, LogOut, Settings, X, Eye, EyeOff } from 'lucide-react'
+import { ClipboardList, FileSearch, Inbox, ClipboardCheck, ShieldCheck, LayoutDashboard, FolderKanban, LogIn, LogOut, Settings, X, Eye, EyeOff } from 'lucide-react'
 import { getApiKey, setApiKey } from '@/lib/config'
 import { logout, useSession } from '@/lib/auth'
 
@@ -12,6 +12,7 @@ export function Layout({children}:{children:ReactNode}) {
     {to:'/registrar',label:'Solicitar proyecto',icon:ClipboardList},
     {to:'/consultar',label:'Consultar solicitud',icon:FileSearch},
     ...(session ? [{to:'/dashboard',label:'Dashboard ejecutivo',icon:LayoutDashboard},
+      {to:'/proyectos',label:'Cartera de proyectos',icon:FolderKanban},
       {to:'/autorizaciones',label:'Autorizaciones',icon:ShieldCheck}] : []),
     ...(session?.user.role === 'admin_bi' ? [{to:'/bandeja',label:'Bandeja BI',icon:Inbox}] : []),
   ]
