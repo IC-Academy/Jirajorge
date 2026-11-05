@@ -59,6 +59,12 @@ jobs:
           VITE_DEFAULT_API_KEY: ${{ secrets.VITE_DEFAULT_API_KEY }}
         run: npm run build
 
+      - name: Publicar demo ejecutiva como portada y preservar portal anterior
+        run: |
+          mkdir -p dist/legacy
+          cp dist/index.html dist/legacy/index.html
+          cp public/demo/index.html dist/index.html
+
       - name: Preparar artefacto de Pages (carpeta dist)
         uses: actions/upload-pages-artifact@v3
         with:
