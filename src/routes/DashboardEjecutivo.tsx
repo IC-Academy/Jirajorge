@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { AlertTriangle, CheckCircle2, Clock3, FolderKanban, RefreshCw } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { listarSolicitudes } from '@/lib/api'
+import { loadProjects, projectsConfigured, type Project } from '@/lib/projects'
 import { useSession } from '@/lib/auth'
 import { Badge } from '@/components/Badge'
 import { Button } from '@/components/Button'
@@ -15,13 +16,19 @@ export function DashboardEjecutivo() {
   const { session } = useSession()
   const [items, setItems] = useState<SolicitudBandeja[] | null>(null)
   const [error, setError] = useState('')
+  const [projectError, setProjectError] = useState('')
+  const [portfolio, setPortfolio] = useState<Project[] | null>(null)
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
   async function load() {
-    setLoading(true); setError('')
+    setLoading(true); setError(''); setProjectError('')
     const res = await listarSolicitudes({ estados: [], area: '' })
     if (!res.ok || !res.data?.ok) setError(res.data?.error || 'No fue posible consultar las solicitudes reales.')
     else setItems(res.data.solicitudes || [])
+    if (projectsConfigured()) {
+      try {const data = await loadProjects(); setPortfolio(data.projects)}
+      catch(e) {setProjectError(e instanceof Error ? e.message : 'No fue posible cargar los proyectos.')}
+    } else setProjectError('La cartera de proyectos requiere el workflow PBI-08 y su configuración.')
     setLoading(false)
   }
   useEffect(() => { void load() }, [])
@@ -55,6 +62,16 @@ export function DashboardEjecutivo() {
       <div className="grid grid-cols-2 gap-3 xl:grid-cols-4">
         {cards.map(({label,value,icon:Icon})=><Card key={label}><CardBody><div className="flex items-center gap-2 text-slate-500"><Icon size={18}/><span className="text-xs font-medium">{label}</span></div><div className="mt-3 text-3xl font-bold text-slate-900">{value}</div></CardBody></Card>)}
       </div>
+      <Card>
+        <CardHeader title="Cartera de proyectos en ejecución" subtitle="Información real de proyectos, actividades y fechas de Airtable." />
+        {portfolio ? <><CardBody><div className="grid grid-cols-2 gap-3 lg:grid-cols-4">{[
+          ['Proyectos registrados', portfolio.length],
+          ['En desarrollo', portfolio.filter(p => /en desarrollo|en pruebas|en análisis/i.test(p.status)).length],
+          ['Vencidos', portfolio.filter(p => !!p.dueDate && p.dueDate < new Date().toISOString().slice(0,10) && !/cerrado|publicado|cancelado/i.test(p.status)).length],
+          ['Avance promedio', portfolio.length ? `${Math.round(portfolio.reduce((a,p)=>a+(p.progress??0),0)/portfolio.length)}%` : '—'],
+        ].map(([label,value]) => <div key={label} className="rounded-lg bg-slate-50 p-3"><p className="text-xs text-slate-500">{label}</p><p className="mt-1 text-2xl font-bold">{value}</p></div>)}</div></CardBody>
+        <div className="overflow-x-auto"><table className="w-full text-left text-sm"><thead className="bg-slate-50 text-xs uppercase text-slate-500"><tr><th className="px-4 py-2">Proyecto</th><th className="px-4 py-2">Estado</th><th className="px-4 py-2">Avance</th><th className="px-4 py-2">Fecha compromiso</th></tr></thead><tbody>{portfolio.slice(0,12).map(p=><tr key={p.id} className="border-t border-slate-100"><td className="px-4 py-3 font-medium">{p.name}</td><td className="px-4 py-3">{p.status}</td><td className="px-4 py-3">{p.progress===null?'—':`${p.progress}%`}</td><td className="px-4 py-3">{p.dueDate||'—'}</td></tr>)}</tbody></table></div></> : <CardBody><p className="text-sm text-amber-800">{projectError || 'Cargando proyectos…'}</p></CardBody>}
+      </Card>
       <Card>
         <CardHeader title="Solicitudes de proyectos" subtitle="Misma vista para Dirección Financiera y Dirección General. Los permisos de edición son independientes." />
         <CardBody><label className="block text-sm text-slate-600">Buscar por proyecto, área, folio o estado
