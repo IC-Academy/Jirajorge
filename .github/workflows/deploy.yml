@@ -56,6 +56,8 @@ jobs:
           VITE_PBI05_URL: ${{ vars.VITE_PBI05_URL }}
           VITE_PBI06_URL: ${{ vars.VITE_PBI06_URL }}
           VITE_PBI07_URL: ${{ vars.VITE_PBI07_URL }}
+          VITE_AUTH_URL: ${{ vars.VITE_AUTH_URL }}
+          VITE_PROJECTS_URL: ${{ vars.VITE_PROJECTS_URL }}
           VITE_DEFAULT_API_KEY: ${{ secrets.VITE_DEFAULT_API_KEY }}
         run: npm run build
 
