@@ -21,3 +21,12 @@ Crear PBI-08 `cartera/listar` para proyectos con identificador, nombre, responsa
 
 ## Despliegue
 Agregar `VITE_AUTH_URL` en GitHub Actions antes de activar la autenticación. Mantener `VITE_*` solo para URLs públicas; nunca colocar secretos, tokens fijos o credenciales de servicio en el bundle. Revisar el archivo `.env` actualmente versionado y rotar cualquier secreto que se hubiera expuesto. Validar tres cuentas reales y accesos denegados en staging antes de mergear.
+
+## Infraestructura Airtable creada (05-nov-2026)
+
+Se crearon **tablas vacías** en la base existente `Portal de Proyectos BI` (`appnkOMMKoAQgexMD`), sin alterar los proyectos y las solicitudes:
+- `Accesos OTP BI` — `tbl6UeI4h99GyI9dm`: ID Desafío, Correo, Hash OTP, Salt, Expira, Intentos, Consumido, Creado.
+- `Sesiones Portal BI` — `tblil0Zc7C2Sv3uOf`: ID Sesión, Correo, Hash Token, Rol, Expira, Revocada, Creada.
+- Catálogo de usuarios existente: `Usuarios y Áreas` — `tble4AMHspQXxbIlp`, tres registros activos de Analista BI, Jefe aprobador y Director aprobador.
+
+**Pendiente crítico:** configurar los workflows en n8n con los secretos del servidor y conexión de correo. Estas tablas **no** implementan por sí mismas OTP, sesiones o permisos. No guardar tokens ni códigos en texto claro. El endpoint debería comparar hash con tiempo constante y usar bloqueo/TTL del servidor; documentar controles de carrera para consumo único.
