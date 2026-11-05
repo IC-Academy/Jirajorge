@@ -1,9 +1,9 @@
 name: Validate Portal BI
 on:
   pull_request:
-    branches: [main]
+    branches: [main, feature/portal-ejecutivo-otp]
   push:
-    branches: [feature/portal-ejecutivo-otp]
+    branches: [feature/portal-ejecutivo-otp, feature/demo-ejecutiva-2026-11-06]
 permissions:
   contents: read
 jobs:
@@ -16,6 +16,8 @@ jobs:
           node-version: '22'
           cache: npm
       - run: npm ci
+      - name: Validate standalone executive demo
+        run: node scripts/check-demo.mjs
       - name: Typecheck and build
         env:
           VITE_PBI01_URL: https://example.invalid/pbi01
