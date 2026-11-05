@@ -82,7 +82,8 @@ function hasOwnRequests(user){return state.requests.some(r=>normalizedEmail(r.em
 function homeFor(user){return user.role==='admin_bi'||user.role==='jefe'?'dashboard':hasOwnRequests(user)?'requests':'new'}
 function signInByEmail(input){
  const email=normalizedEmail(input);if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){notify('Ingresa un correo corporativo válido');return}
- const found=state.users.find(u=>normalizedEmail(u.email)===email&&u.active!==false)
+ const record=state.users.find(u=>normalizedEmail(u.email)===email);if(record&&record.active===false){notify('Acceso deshabilitado por el administrador');return}
+ const found=record
  // En la demo el directorio local determina el rol; no es autenticación real.
  currentUser=found||{key:'visitante:'+email,email,name:email.split('@')[0].replace(/[._-]/g,' ').replace(/\b\w/g,c=>c.toUpperCase()),subtitle:'Solicitante · Sin registro previo',role:'solicitante',initial:email.slice(0,2).toUpperCase(),registered:false};
  route=homeFor(currentUser);selectedProject=null;filter='';render();
