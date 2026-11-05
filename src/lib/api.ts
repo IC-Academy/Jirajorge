@@ -5,6 +5,7 @@
 // lo muestre (nunca se sustituye por datos falsos).
 
 import { ENV, getApiKey } from './config'
+import { currentSession } from './auth'
 import type {
   ApiResult,
   RegistrarSolicitudPayload,
@@ -31,6 +32,9 @@ async function postJson<TResponse>(
   const headers: Record<string, string> = { 'Content-Type': 'application/json' }
   if (opts.withApiKey) {
     headers['x-api-key'] = getApiKey()
+    const token = currentSession()?.token
+    if (!token) return { ok: false, status: 401, data: null, networkError: false, errorMessage: 'Se requiere iniciar sesión.' }
+    headers['Authorization'] = `Bearer ${token}`
   }
 
   try {
@@ -65,7 +69,7 @@ async function postJson<TResponse>(
 }
 
 export function registrarSolicitud(payload: RegistrarSolicitudPayload) {
-  return postJson<RegistrarSolicitudResponse>(ENV.PBI01_URL, payload, { withApiKey: true })
+  return postJson<RegistrarSolicitudResponse>(ENV.PBI01_URL, payload)
 }
 
 export function consultarSolicitud(payload: ConsultarSolicitudPayload) {
