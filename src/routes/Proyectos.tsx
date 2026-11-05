@@ -98,7 +98,7 @@ export function Proyectos() {
    </div>
   </div>:null}
   {editingProject?<div role="dialog" aria-modal="true" aria-label="Editar proyecto" className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-    <div className="max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-lg bg-white p-5 shadow-xl"><h2 className="font-semibold">Actualizar proyecto</h2><p className="my-2 text-sm text-slate-600">{editingProject.name}</p>
+    <div className="max-h-[85vh] w-full max-w-lg overflow-y-auto rounded-lg bg-white p-5 shadow-xl"><h2 className="font-semibold">Actualizar proyecto</h2><p className="my-2 text-sm text-slate-600">{editingProject.name}</p>
       <label className="mt-3 block text-sm">Estado<select className="mt-1 block w-full rounded border p-2" value={editingProject.status} onChange={e=>setEditingProject({...editingProject,status:e.target.value})}>{projectStatuses.map(x=><option key={x}>{x}</option>)}</select></label>
       <label className="mt-3 block text-sm">Prioridad<select className="mt-1 block w-full rounded border p-2" value={editingProject.priority} onChange={e=>setEditingProject({...editingProject,priority:e.target.value})}>{priorities.map(x=><option key={x}>{x}</option>)}</select></label>
       <label className="mt-3 block text-sm">Próximo hito<input className="mt-1 block w-full rounded border p-2" value={editingProject.nextMilestone} onChange={e=>setEditingProject({...editingProject,nextMilestone:e.target.value})}/></label>
