@@ -1,0 +1,28 @@
+name: Validate Portal BI
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [feature/portal-ejecutivo-otp]
+permissions:
+  contents: read
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - name: Typecheck and build
+        env:
+          VITE_PBI01_URL: https://example.invalid/pbi01
+          VITE_PBI02_URL: https://example.invalid/pbi02
+          VITE_PBI03_URL: https://example.invalid/pbi03
+          VITE_PBI04_URL: https://example.invalid/pbi04
+          VITE_PBI05_URL: https://example.invalid/pbi05
+          VITE_PBI06_URL: https://example.invalid/pbi06
+          VITE_PBI07_URL: https://example.invalid/pbi07
+        run: npm run build
