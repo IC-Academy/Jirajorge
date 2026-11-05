@@ -6,12 +6,34 @@ import { Card, CardBody, CardHeader } from '@/components/Card'
 import { Button } from '@/components/Button'
 import { LoadingState, ErrorState, EmptyState } from '@/components/States'
 
-const activityStatuses = ['No iniciada','En curso','Bloqueada','Terminada']
-const projectStatuses = ['Backlog','Programado','En desarrollo','En pruebas','Bloqueado','Completado','Cancelado']
-const priorities = ['Baja','Media','Alta','Crítica']
+const activityStatuses = ['No iniciada','En proceso','Bloqueada','En validación','Completada','Cancelada']
+const projectStatuses = ['Backlog','Priorizado','Programado','En análisis','En desarrollo','Bloqueado','En pausa','En pruebas','Publicado','Cerrado','Cancelado']
+const priorities = ['Baja','Media','Alta','Crítica','Urgente dirección']
 function pct(v:number|null) { return typeof v === 'number' && Number.isFinite(v) ? Math.round(Math.max(0, Math.min(100, v))) : null }
 function today() { const n = new Date(); return `${n.getFullYear()}-${String(n.getMonth()+1).padStart(2,'0')}-${String(n.getDate()).padStart(2,'0')}` }
 function progressBar(v:number|null) { const n=pct(v); return <div className="flex min-w-28 items-center gap-2"><div className="h-2 w-24 overflow-hidden rounded-full bg-slate-100"><div className="h-full rounded-full bg-blue-700" style={{width:`${n??0}%`}} /></div><span className="text-xs">{n===null?'—':`${n}%`}</span></div> }
+
+
+function Timeline({projects,onSelect}:{projects:Project[];onSelect:(id:string)=>void}) {
+ const dated=projects.filter(p=>p.startDate && p.dueDate && p.dueDate>=p.startDate)
+ const earliest=dated.length?Math.min(...dated.map(p=>Date.parse(p.startDate!+'T00:00:00Z'))):0
+ const latest=dated.length?Math.max(...dated.map(p=>Date.parse(p.dueDate!+'T00:00:00Z'))):0
+ const span=Math.max(86400000,latest-earliest+86400000)
+ const pos=(date:string)=>Math.max(0,Math.min(100,((Date.parse(date+'T00:00:00Z')-earliest)/span)*100))
+ const axis=Array.from({length:5},(_,i)=>new Date(earliest+span*i/4).toISOString().slice(0,10))
+ return <div className="overflow-x-auto p-4"><div className="min-w-[720px]">
+  <div className="mb-3 grid grid-cols-[220px_1fr] items-end gap-4"><span className="text-xs font-semibold text-slate-500">Proyecto</span><div className="flex justify-between text-xs text-slate-500">{dated.length?axis.map(x=><span key={x}>{x}</span>):'Sin fechas de planificación'}</div></div>
+  {projects.map(p=><button key={p.id} type="button" onClick={()=>onSelect(p.id)} className="grid w-full grid-cols-[220px_1fr] items-center gap-4 border-t border-slate-100 py-3 text-left hover:bg-blue-50">
+    <div className="min-w-0"><div className="truncate text-sm font-semibold">{p.name}</div><div className="text-xs text-slate-500">{p.dueDate||'Sin compromiso'}</div></div>
+    {p.startDate&&p.dueDate&&p.dueDate>=p.startDate?<div className="relative h-8 rounded bg-slate-100">
+      <div className="absolute top-1.5 h-5 rounded bg-blue-200" style={{left:`${pos(p.startDate)}%`,width:`${Math.max(0.7,pos(p.dueDate)-pos(p.startDate))}%`}}>
+        <div className="h-full rounded bg-blue-800" style={{width:`${pct(p.progress)??0}%`}}/>
+      </div>
+    </div>:<span className="text-xs text-amber-800">Fechas incompletas</span>}
+  </button>)}
+  <div className="mt-3 text-xs text-slate-500">La barra clara representa el plazo planificado y la barra oscura el avance reportado. Fechas sin información se muestran sin barra.</div>
+ </div></div>
+}
 
 export function Proyectos() {
  const {session} = useSession()
@@ -39,7 +61,7 @@ export function Proyectos() {
  const project=projects.find(p=>p.id===selected)
  const tasks=activities.filter(a=>a.projectId===selected)
  const current=today()
- const delayed=projects.filter(p=>p.dueDate && p.dueDate<current && !/completado|cancelado/i.test(p.status)).length
+ const delayed=projects.filter(p=>p.dueDate && p.dueDate<current && !/cerrado|publicado|cancelado/i.test(p.status)).length
  const blocked=projects.filter(p=>/bloqueado/i.test(p.status)||!!p.blocker).length
  async function saveActivity() {
   if(!editing)return
@@ -75,11 +97,10 @@ export function Proyectos() {
    {!matching.length?<EmptyState label="No hay proyectos para mostrar."/>:view==='lista'?
     <div className="overflow-x-auto"><table className="w-full text-left text-sm"><thead className="bg-slate-50 text-xs text-slate-500"><tr>{['Proyecto','Estado','Prioridad','Avance','Compromiso','Acción'].map(x=><th key={x} className="px-4 py-3">{x}</th>)}</tr></thead>
       <tbody>{matching.map(p=><tr key={p.id} className={`border-t border-slate-100 ${p.id===selected?'bg-blue-50':''}`}>
-       <td className="px-4 py-3"><button type="button" className="text-left font-semibold text-blue-900 hover:underline" onClick={()=>setSelected(p.id)}><span className="block text-xs font-normal text-slate-500">{p.id}</span>{p.name}</button></td><td className="px-4 py-3">{p.status}</td><td className="px-4 py-3">{p.priority}</td><td className="px-4 py-3">{progressBar(p.progress)}</td><td className={`px-4 py-3 ${p.dueDate && p.dueDate<current && p.status!=='Completado'?'font-semibold text-red-700':''}`}>{p.dueDate||'—'}</td><td className="px-4 py-3">{admin?<button className="text-sm font-semibold text-blue-800 underline" onClick={()=>setEditingProject({...p})}>Editar</button>:<span className="text-slate-400">Consulta</span>}</td>
+       <td className="px-4 py-3"><button type="button" className="text-left font-semibold text-blue-900 hover:underline" onClick={()=>setSelected(p.id)}><span className="block text-xs font-normal text-slate-500">{p.id}</span>{p.name}</button></td><td className="px-4 py-3">{p.status}</td><td className="px-4 py-3">{p.priority}</td><td className="px-4 py-3">{progressBar(p.progress)}</td><td className={`px-4 py-3 ${p.dueDate && p.dueDate<current && !/cerrado|publicado|cancelado/i.test(p.status)?'font-semibold text-red-700':''}`}>{p.dueDate||'—'}</td><td className="px-4 py-3">{admin?<button className="text-sm font-semibold text-blue-800 underline" onClick={()=>setEditingProject({...p})}>Editar</button>:<span className="text-slate-400">Consulta</span>}</td>
       </tr>)}</tbody></table></div>:
       view==='kanban'?<div className="grid gap-3 p-4 md:grid-cols-3 xl:grid-cols-4">{projectStatuses.filter(st=>matching.some(p=>p.status===st)).map(st=><div key={st} className="rounded-lg bg-slate-100 p-3"><p className="mb-3 text-sm font-semibold">{st} · {matching.filter(p=>p.status===st).length}</p><div className="space-y-2">{matching.filter(p=>p.status===st).map(p=><button key={p.id} type="button" onClick={()=>setSelected(p.id)} className="w-full rounded-lg border bg-white p-3 text-left shadow-sm"><span className="text-xs text-slate-500">{p.id}</span><p className="text-sm font-semibold">{p.name}</p><div className="mt-2">{progressBar(p.progress)}</div></button>)}</div></div>)}</div>:
-      <div className="overflow-x-auto p-4"><p className="mb-3 text-xs text-slate-500">Fechas estimadas de inicio y entrega registradas. Se muestran como etiquetas para evitar escalas engañosas.</p>
-      <div className="min-w-[600px] space-y-2">{matching.map(p=><button key={p.id} onClick={()=>setSelected(p.id)} className="grid w-full grid-cols-[2fr_1fr_1fr_1fr] items-center gap-3 rounded border p-3 text-left text-sm hover:bg-blue-50"><span className="font-semibold">{p.name}</span><span>{p.startDate||'Sin inicio'}</span><span>{p.dueDate||'Sin entrega'}</span>{progressBar(p.progress)}</button>)}</div></div>}
+      <Timeline projects={matching} onSelect={setSelected}/>
   </Card>
   {project?<Card><CardHeader title={project.name} subtitle={`${project.id} · ${project.area} · ${tasks.length} actividades`}/><CardBody className="space-y-4">
     <div className="grid gap-3 text-sm sm:grid-cols-3"><p><b>Responsable:</b> {project.owner||'—'}</p><p><b>Próximo hito:</b> {project.nextMilestone||'—'}</p><p><b>Fecha del hito:</b> {project.milestoneDate||'—'}</p></div>
