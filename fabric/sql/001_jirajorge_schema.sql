@@ -5,7 +5,7 @@ CREATE SCHEMA jirajorge;
 GO
 CREATE TABLE jirajorge.Usuarios (
     UsuarioId uniqueidentifier NOT NULL DEFAULT NEWID() PRIMARY KEY,
-    EntraOid uniqueidentifier NULL UNIQUE,
+    EntraOid uniqueidentifier NULL,
     TenantId uniqueidentifier NULL,
     Correo nvarchar(255) NOT NULL UNIQUE,
     Nombre nvarchar(200) NOT NULL,
@@ -54,7 +54,7 @@ CREATE TABLE jirajorge.Aprobaciones (
 CREATE TABLE jirajorge.Proyectos (
     ProyectoId uniqueidentifier NOT NULL DEFAULT NEWID() PRIMARY KEY,
     Codigo nvarchar(32) NOT NULL UNIQUE,
-    SolicitudId uniqueidentifier NULL UNIQUE REFERENCES jirajorge.Solicitudes(SolicitudId),
+    SolicitudId uniqueidentifier NULL REFERENCES jirajorge.Solicitudes(SolicitudId),
     Nombre nvarchar(250) NOT NULL,
     Area nvarchar(150) NULL,
     Responsable nvarchar(200) NULL,
@@ -94,6 +94,8 @@ CREATE TABLE jirajorge.Historial (
     ActorOid uniqueidentifier NULL,
     FechaUtc datetime2 NOT NULL DEFAULT SYSUTCDATETIME()
 );
+CREATE UNIQUE INDEX UX_Usuarios_TenantOid ON jirajorge.Usuarios(TenantId, EntraOid) WHERE TenantId IS NOT NULL AND EntraOid IS NOT NULL;
+CREATE UNIQUE INDEX UX_Proyectos_SolicitudOrigen ON jirajorge.Proyectos(SolicitudId) WHERE SolicitudId IS NOT NULL;
 CREATE INDEX IX_Actividades_Proyecto ON jirajorge.Actividades(ProyectoId);
 CREATE INDEX IX_Solicitudes_Estado ON jirajorge.Solicitudes(Estado,CreadoUtc);
 CREATE INDEX IX_Proyectos_Estado ON jirajorge.Proyectos(Estado,FechaEntrega);
