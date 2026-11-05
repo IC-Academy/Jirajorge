@@ -67,7 +67,7 @@ export function DashboardEjecutivo() {
       <div className="rounded-lg border border-blue-200 bg-blue-50 p-4 text-sm text-blue-900">
         <strong>Alcance de los datos:</strong> los indicadores anteriores se calculan con solicitudes PBI-03; el avance porcentual, las fechas compromiso y las actividades por proyecto requieren un endpoint adicional de cartera de proyectos. No se muestran cifras simuladas.
       </div>
-      {session?.user.role === 'admin_bi' ? <div><Button onClick={()=>navigate('/bandeja')}>Abrir bandeja operativa BI</Button></div> : null}
+      <div className="flex flex-wrap gap-2"><Button onClick={()=>navigate('/proyectos')}>Ver proyectos y actividades</Button>{session?.user.role === 'admin_bi' ? <Button variant="secondary" onClick={()=>navigate('/bandeja')}>Abrir bandeja operativa BI</Button> : null}</div>
     </> : null}
   </div>
 }
