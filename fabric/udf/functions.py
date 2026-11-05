@@ -72,7 +72,7 @@ def list_portfolio(db: fn.FabricSqlConnection, ctx: fn.UserDataFunctionContext) 
         )
         projects = _as_projects(cursor.fetchall())
         cursor.execute(
-            """SELECT Codigo, p.Codigo, a.Nombre, a.Fase, a.Responsable,
+            """SELECT a.Codigo, p.Codigo, a.Nombre, a.Fase, a.Responsable,
                       a.Estado, a.Avance, a.FechaInicio, a.FechaFin, a.Bloqueo
                FROM jirajorge.Actividades a
                JOIN jirajorge.Proyectos p ON a.ProyectoId=p.ProyectoId
