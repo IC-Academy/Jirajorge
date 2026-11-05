@@ -9,6 +9,7 @@ import { EvaluacionBI } from '@/routes/EvaluacionBI'
 import { CentroAutorizaciones } from '@/routes/CentroAutorizaciones'
 import { Login } from '@/routes/Login'
 import { DashboardEjecutivo } from '@/routes/DashboardEjecutivo'
+import { Proyectos } from '@/routes/Proyectos'
 import { PrivateRoute } from '@/components/PrivateRoute'
 
 export default function App() {
@@ -20,6 +21,7 @@ export default function App() {
     <Route path="/consultar" element={<ConsultarSolicitud />} />
     <Route path="/login" element={<Login />} />
     <Route path="/dashboard" element={<PrivateRoute><DashboardEjecutivo /></PrivateRoute>} />
+    <Route path="/proyectos" element={<PrivateRoute><Proyectos /></PrivateRoute>} />
     <Route path="/bandeja" element={<PrivateRoute admin><BandejaBI /></PrivateRoute>} />
     <Route path="/evaluacion/:folio" element={<PrivateRoute admin><EvaluacionBI /></PrivateRoute>} />
     <Route path="/autorizaciones" element={<PrivateRoute><CentroAutorizaciones /></PrivateRoute>} />
